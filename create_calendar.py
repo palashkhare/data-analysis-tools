@@ -35,4 +35,11 @@ df["week"] = df["date"].apply(lambda x: x.week)
 df["weekday"] = df["date"].apply(lambda x: x.weekday())
 df["weekofyear"] = df["date"].apply(lambda x: x.weekofyear)
 
-df.to_parquet("output/calendar.parquet", partition_cols=["year", "month"])
+holiday_calendar_df = pd.read_csv("data/calendar.csv")
+holiday_calendar_df["full_dt"] = holiday_calendar_df["Date"] + "-" + holiday_calendar_df["Year"].astype("str")
+holiday_calendar_df["epoch"] = holiday_calendar_df["full_dt"].apply(str_to_epoch)
+holiday_calendar_df = holiday_calendar_df[["epoch", "Name", "Type"]]
+calendar = df.merge(holiday_calendar_df, how="left", left_on="epoch", right_on="epoch")
+
+calendar.to_parquet("output/calendar.parquet", partition_cols=["year", "month"])
+calendar.to_excel("output/calendar.xlsx")
